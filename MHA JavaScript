@@ -1,0 +1,169 @@
+class Character {
+    constructor(name, interactions, thoughts) {
+        this.name = name;
+        this.interactions = interactions;
+        this.thoughts = thoughts;
+        this.encounterCount = 0;
+    }
+
+    interact() {
+        this.encounterCount += 1;
+        const interaction = this.interactions[Math.floor(Math.random() * this.interactions.length)];
+        return interaction;
+    }
+
+    getThoughts() {
+        return this.thoughts[Math.floor(Math.random() * this.thoughts.length)];
+    }
+}
+
+const characters = [
+    new Character("Kyoka", [
+        "Kyoka sits on your face, pressing her weight down and laughing. She wiggles her toes against your nose, enjoying your discomfort.",
+        "Kyoka pushes her stinky feet onto your face, smirking as you struggle to breathe. 'You like that, don't you?' she mocks.",
+        "Kyoka grinds her feet on your nose, her laughter ringing in your ears. 'You make a good footrest,' she says.",
+        "Kyoka mocks you as she sits on your face, her feet dominating your senses. 'You'll get used to it,' she laughs."
+    ], [
+        "Kyoka thinks you're a pathetic loser.",
+        "Kyoka finds your face comfortable to sit on.",
+        "Kyoka enjoys making you suffer under her feet.",
+        "Kyoka thinks you deserve to be her footrest."
+    ]),
+    new Character("Ochako", [
+        "Ochako asks you to rub her feet, giggling as you nervously comply. 'Don't be shy, I know you love it,' she teases.",
+        "Ochako demands a foot massage, her feet already sweaty from her training. 'Come on, put some effort into it!' she orders.",
+        "Ochako makes you smell her sweaty feet, laughing at your expression. 'Isn't it wonderful?' she asks mockingly.",
+        "Ochako laughs as you rub her feet, clearly enjoying your submission. 'You're pretty good at this,' she admits."
+    ], [
+        "Ochako thinks you're a loser for enjoying this.",
+        "Ochako appreciates the effort you put into rubbing her feet.",
+        "Ochako enjoys watching you squirm.",
+        "Ochako thinks you have potential as a foot slave."
+    ])
+    // Add more characters similarly
+];
+
+const locations = {
+    "1. School": ["Kyoka", "Momo", "Ochako", "Tsuyu", "Itsuka"],
+    "2. Cafe": ["Nejire", "Eri", "Lady Nagant"],
+    "3. Grocery Store": ["Midnight", "Nana", "Mt Lady"],
+    "4. Bank": ["Mina", "Mirko"],
+    "5. Hospital": ["Himiko", "Toru", "Mei"]
+};
+
+const playerResponses = [
+    "You feel disgusted by the smell of her feet, but you comply.",
+    "You reluctantly follow her orders, feeling humiliated.",
+    "You gag from the stench, but continue as commanded.",
+    "You can't help but feel aroused despite the humiliation."
+];
+
+function encounterGirl(location, encountered) {
+    const possibleGirls = characters.filter(char => locations[location].includes(char.name));
+    const unencounteredGirls = possibleGirls.filter(girl => !encountered.has(girl.name));
+
+    let girl;
+    if (unencounteredGirls.length) {
+        const weights = possibleGirls.map(girl => unencounteredGirls.includes(girl) ? 3 : 1);
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+        let randomWeight = Math.random() * totalWeight;
+
+        for (let i = 0; i < possibleGirls.length; i++) {
+            if (randomWeight < weights[i]) {
+                girl = possibleGirls[i];
+                break;
+            }
+            randomWeight -= weights[i];
+        }
+    } else {
+        girl = possibleGirls[Math.floor(Math.random() * possibleGirls.length)];
+    }
+
+    if (!encountered.has(girl.name)) {
+        encountered.add(girl.name);
+    }
+    const interaction = girl.interact();
+    return { girl, interaction };
+}
+
+function checkRemaining(encountered) {
+    const allGirls = new Set(characters.map(char => char.name));
+    const remaining = [...allGirls].filter(name => !encountered.has(name));
+    return remaining;
+}
+
+function addEpilogue(choice, maxEncounters) {
+    if (choice === '1') {
+        console.log(`Upon meeting ${maxEncounters.name}, you decide to stay as their permanent foot slave.`);
+        console.log("You always will.");
+    } else if (choice === '2') {
+        console.log("You have chosen to return to your own world.");
+    }
+}
+
+function main() {
+    const encountered = new Set();
+    const totalGirls = characters.length;
+    let failedAttempts = 0;
+
+    console.log("You have been transported to the world of My Hero Academia.");
+    console.log("To return to your own world, you must encounter all of the girls in this world.");
+
+    while (encountered.size < totalGirls) {
+        console.log("\nWhere would you like to go?");
+        for (let loc in locations) {
+            console.log(loc);
+        }
+        const choice = prompt("Enter the number corresponding to your chosen location: ").trim();
+
+        if (!Object.keys(locations).includes(`${choice}. `)) {
+            console.log("Invalid location. Try again.");
+            continue;
+        }
+
+        const locationKey = `${choice}. ${Object.keys(locations).find(loc => loc.startsWith(`${choice}.`)).split('. ')[1]}`;
+
+        const { girl, interaction } = encounterGirl(locationKey, encountered);
+        if (encountered.has(girl.name)) {
+            failedAttempts += 1;
+        } else {
+            failedAttempts = 0;
+        }
+
+        const playerResponse = playerResponses[Math.floor(Math.random() * playerResponses.length)];
+        console.log(`You encountered ${girl.name}.`);
+        console.log(interaction);
+        console.log(`Your response: ${playerResponse}`);
+        console.log(`You have encountered ${encountered.size}/${totalGirls} girls.`);
+
+        const remaining = checkRemaining(encountered);
+        console.log(`Girls you still need to encounter: ${remaining.join(', ')}`);
+
+        // Ensure a new girl encounter after three failed attempts
+        if (failedAttempts >= 3) {
+            const unencounteredGirls = checkRemaining(encountered);
+            if (unencounteredGirls.length) {
+                const forcedGirlName = unencounteredGirls[Math.floor(Math.random() * unencounteredGirls.length)];
+                const forcedGirl = characters.find(char => char.name === forcedGirlName);
+                console.log(forcedGirl.interact());
+                encountered.add(forcedGirl.name);
+                failedAttempts = 0;
+            }
+        }
+    }
+
+    // Determine the girl with the most encounters
+    const maxEncounters = characters.reduce((prev, curr) => prev.encounterCount > curr.encounterCount ? prev : curr);
+    console.log(`\nYou have met all the girls. ${maxEncounters.name} has offered you a choice.`);
+    console.log(`Do you want to stay in this world as ${maxEncounters.name}'s permanent foot slave or return to your own world?`);
+    const choice = prompt("Enter '1' to stay as a slave or '2' to return to your world: ").trim();
+
+    console.log("\nSummary of Encounters:");
+    characters.forEach(char => {
+        console.log(`${char.name}: ${char.encounterCount} times. Thoughts: ${char.getThoughts()}`);
+    });
+
+    addEpilogue(choice, maxEncounters);
+}
+
+main();
